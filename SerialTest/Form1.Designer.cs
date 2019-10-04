@@ -36,6 +36,7 @@
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.button3 = new System.Windows.Forms.Button();
             this.TXcomboBox = new System.Windows.Forms.ComboBox();
+            this.textBox2 = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // serialPort1
@@ -77,12 +78,12 @@
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
             this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox1.Size = new System.Drawing.Size(587, 187);
+            this.textBox1.Size = new System.Drawing.Size(587, 137);
             this.textBox1.TabIndex = 4;
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(90, 348);
+            this.button3.Location = new System.Drawing.Point(90, 415);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(75, 23);
             this.button3.TabIndex = 5;
@@ -98,11 +99,19 @@
             this.TXcomboBox.Size = new System.Drawing.Size(360, 20);
             this.TXcomboBox.TabIndex = 6;
             // 
+            // textBox2
+            // 
+            this.textBox2.Location = new System.Drawing.Point(201, 303);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.Size = new System.Drawing.Size(360, 19);
+            this.textBox2.TabIndex = 7;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.textBox2);
             this.Controls.Add(this.TXcomboBox);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.textBox1);
@@ -126,6 +135,7 @@
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.ComboBox TXcomboBox;
+        private System.Windows.Forms.TextBox textBox2;
     }
 }
 
