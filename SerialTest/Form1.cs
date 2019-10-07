@@ -18,10 +18,10 @@ namespace SerialTest
             //コマンド一覧
             //[ヘッダ(0xff固定値)][コマンドコード][実データ長][実データ][sum]
             //
-            "FF1000F1",//接続確認
-            "FFF00011",//デバイス情報
-            "FF0300FE",//スキャン開始
-            "FF02613F",//LED点灯ヘッダ＋ [ ([blue] [red] [green]) x 32] [sum]
+            "FF1000F1",//1接続確認
+            "FFF00011",//2デバイス情報
+            "FF0300FE",//3スキャン開始
+            "FF02613F",//4LED点灯ヘッダ＋ [ ([blue] [red] [green]) x 32] [sum]
             //LEDダンプデータ？
             "ff02613f22fb2831e83e43d05756b87068a0897b89a18d71baa059d3b241eca454ee9469ee837fee7395ee62abee52c0ee41d6ee31ecee33efdc37f1ca3bf3b73ff5a443f79147f97f4bfb6c4ffdfc5964e45579c8528fac4fa5914cbb7549d05946e63d4368ff02613f22fa2b35e24447ca5d5ab2766c9b8e7f83a7916bc0a453d9b143eea059ee906eee7f84ee6f9aee5eb0ee4ec5ee3ddbee30eeea34f0d838f2c53cf4b240f69f44f88d48fa7a4cfc6753f95769dd547ec25194a64eaa8a4bc06e48d55345eb374269ff02613f27f43139dc4a4cc5635ead7c719594837dad9666c6a84edfad48ee9c5eee8c74ee7b89ee6b9fee5ab5ee4acbee39e0ee31eee635f0d339f2c13df4ae41f69b45f88849fa764dfc6358f2566ed75384bb50999f4daf834ac56847db4c44f0304165"
         };
@@ -70,6 +70,14 @@ namespace SerialTest
             }
         }
 
+        private void sendPacket(byte[] packet)
+        {
+            if (serialPort1.IsOpen)
+            {
+                serialPort1.Write(packet, 0, packet.Length);
+            }
+        }
+
         delegate void SetTextCallback(string text);
         private void Response(string text)
         {
@@ -99,14 +107,14 @@ namespace SerialTest
             //データ部読み取り
 
             byte[] data = new byte[len + 1];
-            byte myChkSum = (byte)((header[1] + header[2])%255);
+            int myChkSum = header[0] + header[1] + header[2];
             if (len != 0)
             {
                 for (int i = 0; i < len; i++)
                 {
                     data[i] = (byte)serialPort1.ReadByte();
 
-                    myChkSum = (byte)((myChkSum + data[i])%255);
+                    myChkSum = myChkSum + data[i];
                 }
                 string strData = BitConverter.ToString(data).Replace("-", string.Empty);
                 Response("data:" + strData);
@@ -130,8 +138,8 @@ namespace SerialTest
 
 
             //checksum
-            
-            //Response("calc sum:" + myChkSum.ToString("X2"));
+            myChkSum = 0x100 - (myChkSum & 0xFF);
+            Response("calc sum:" + myChkSum.ToString("X2"));
 
             if (header[1] == 0x01)
             {
@@ -165,6 +173,34 @@ namespace SerialTest
                 j += 2;
             }
             return bytes;
+        }
+
+        private void LEDSendButton_Click(object sender, EventArgs e)
+        {
+            string packet = commands[3];
+            for (int i = 0; i < 32;i++)
+            {
+                packet += LEDTextBox.Text;
+            }
+            packet += calcSUM(packet).ToString("X2");
+            sendPacket(hexStringToBytes(packet));
+            Response("Send:" + packet);
+
+        }
+
+        private byte calcSUM(string packet)
+        {
+            int sum = 0;
+            byte[] bytesPacket = hexStringToBytes(packet);
+            if (bytesPacket.Length != 0)
+            {
+                for(int i=0; i < bytesPacket.Length; i++)
+                {
+                    sum += bytesPacket[i];
+                }
+                sum = 0x100 - (sum & 0xFF);
+            }
+            return (byte)sum;
         }
     }
 }
