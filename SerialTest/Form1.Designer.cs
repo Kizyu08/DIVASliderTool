@@ -40,6 +40,8 @@
             this.LEDTextBox = new System.Windows.Forms.TextBox();
             this.LEDSendButton = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.scanStopButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // serialPort1
@@ -134,12 +136,29 @@
             this.button5.TabIndex = 9;
             this.button5.Text = "連続スキャン";
             this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.scanButtonClicked);
+            // 
+            // timer1
+            // 
+            this.timer1.Interval = 1000;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
+            // scanStopButton
+            // 
+            this.scanStopButton.Location = new System.Drawing.Point(90, 189);
+            this.scanStopButton.Name = "scanStopButton";
+            this.scanStopButton.Size = new System.Drawing.Size(75, 23);
+            this.scanStopButton.TabIndex = 10;
+            this.scanStopButton.Text = "スキャン停止";
+            this.scanStopButton.UseVisualStyleBackColor = true;
+            this.scanStopButton.Click += new System.EventHandler(this.scanStopButton_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.scanStopButton);
             this.Controls.Add(this.button5);
             this.Controls.Add(this.LEDSendButton);
             this.Controls.Add(this.LEDTextBox);
@@ -171,6 +190,8 @@
         private System.Windows.Forms.TextBox LEDTextBox;
         private System.Windows.Forms.Button LEDSendButton;
         private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.Button scanStopButton;
     }
 }
 
