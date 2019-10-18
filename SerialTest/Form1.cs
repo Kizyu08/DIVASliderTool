@@ -34,7 +34,7 @@ namespace SerialTest
         
 
         //slider slider = new Chunithm();
-        slider slider = new Nostalgia();
+        slider slider = new NostalgiaTest();
 
         public Form1()
         {
@@ -457,6 +457,88 @@ namespace SerialTest
                     else//1->0
                     {
                         win32api.keybd_event(GameKeys[i-2], 0, 2, (UIntPtr)0);//(byte)win32api.MapVirtualKey(keys[i], 3)
+                    }
+                }
+            }
+            LastNostalKeys = NostalKeys;
+        }
+    }
+
+    /// <summary>
+    /// spice対策テスト
+    /// </summary>
+    class NostalgiaTest : slider
+    {
+        public override string Basecolor { get; set; } = "fefefe";
+        public override string Touchcolor { get; set; } = "00fee6";
+
+        private string NostalKeys = "00000000000000000000000000000000";
+        private string LastNostalKeys = "00000000000000000000000000000000";
+
+
+        public override byte[] GameKeys { get; set; } =
+        {
+            (byte)Keys.D1,//1
+            (byte)Keys.D2,
+            (byte)Keys.D3,
+            (byte)Keys.D4,
+            (byte)Keys.D5,
+            (byte)Keys.D6,
+            (byte)Keys.D7,
+            (byte)Keys.D8,
+            (byte)Keys.D9,
+            (byte)Keys.D0,
+            (byte)Keys.Q,
+            (byte)Keys.W,
+            (byte)Keys.E,
+            (byte)Keys.R,
+            (byte)Keys.T,
+            (byte)Keys.Y,
+            (byte)Keys.U,
+            (byte)Keys.I,
+            (byte)Keys.O,
+            (byte)Keys.P,
+            (byte)Keys.A,
+            (byte)Keys.S,
+            (byte)Keys.D,
+            (byte)Keys.F,
+            (byte)Keys.G,
+            (byte)Keys.H,
+            (byte)Keys.J,
+            (byte)Keys.K//,//28
+            //(byte)Keys.L,
+            //(byte)Keys.Z,
+            //(byte)Keys.X,
+            //(byte)Keys.C,
+            //(byte)Keys.V,
+            //(byte)Keys.B,
+            //(byte)Keys.N,
+            //(byte)Keys.M
+        };
+
+        public override void UpdateKeys(string pdaslider)
+        {
+            NostalKeys = "";
+            //forを使って1文字ずつ処理する
+            for (int i = 0; i < 32; i++)
+            {
+                if (pdaslider[i] == '1')
+                {
+                    NostalKeys += '1';
+                }
+                else
+                {
+                    NostalKeys += '0';
+                }
+                if (LastNostalKeys[i] != NostalKeys[i] && 1 < i && i < 29)
+                {
+                    if (NostalKeys[i] == '1')//0->1
+                    {
+                        win32api.keybd_event(GameKeys[0], 0x16, 0, (UIntPtr)0);
+                    }
+                    else//1->0
+                    {
+                        win32api.keybd_event(GameKeys[0], 0x16, 2, (UIntPtr)0);//(byte)win32api.MapVirtualKey(keys[i], 3)
                     }
                 }
             }
