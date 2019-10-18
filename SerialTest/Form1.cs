@@ -15,20 +15,10 @@ using System.Threading;
 
 namespace SerialTest
 {
-    // Win32APIを呼び出すためのクラス
-    public class win32api
-    {
-        [DllImport("user32.dll")]
-        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
-
-        // 仮想キーコードをスキャンコードに変換
-        [DllImport("user32.dll", EntryPoint = "MapVirtualKeyA")]
-        public extern static int MapVirtualKey(
-            int wCode, int wMapType);
-    }
-
     public partial class Form1 : Form
     {
+        bool debug = true;
+
         string[] commands =
         {
             //コマンド一覧
@@ -41,29 +31,11 @@ namespace SerialTest
             //LEDダンプデータ？
             "ff02613f22fb2831e83e43d05756b87068a0897b89a18d71baa059d3b241eca454ee9469ee837fee7395ee62abee52c0ee41d6ee31ecee33efdc37f1ca3bf3b73ff5a443f79147f97f4bfb6c4ffdfc5964e45579c8528fac4fa5914cbb7549d05946e63d4368ff02613f22fa2b35e24447ca5d5ab2766c9b8e7f83a7916bc0a453d9b143eea059ee906eee7f84ee6f9aee5eb0ee4ec5ee3ddbee30eeea34f0d838f2c53cf4b240f69f44f88d48fa7a4cfc6753f95769dd547ec25194a64eaa8a4bc06e48d55345eb374269ff02613f27f43139dc4a4cc5635ead7c719594837dad9666c6a84edfad48ee9c5eee8c74ee7b89ee6b9fee5ab5ee4acbee39e0ee31eee635f0d339f2c13df4ae41f69b45f88849fa764dfc6358f2566ed75384bb50999f4daf834ac56847db4c44f0304165"
         };
-
-        byte[] keys =
-        {
-            (byte)Keys.A,
-            (byte)Keys.Z,
-            (byte)Keys.S,
-            (byte)Keys.X,
-            (byte)Keys.D,
-            (byte)Keys.C,
-            (byte)Keys.F,
-            (byte)Keys.V,
-            (byte)Keys.G,
-            (byte)Keys.B,
-            (byte)Keys.H,
-            (byte)Keys.N,
-            (byte)Keys.J,
-            (byte)Keys.M,
-            (byte)Keys.K,
-            (byte)188
-        };
-        string lastPdaSlider = "00000000000000000000000000000000";
-        string lastUniSlider = "0000000000000000";
         
+
+        //slider slider = new Chunithm();
+        slider slider = new Nostalgia();
+
         public Form1()
         {
             InitializeComponent();
@@ -107,6 +79,7 @@ namespace SerialTest
 
         private void sendPacket(string strPacket)
         {
+            strPacket += calcSUM(strPacket).ToString("X2");
             byte[] packet = hexStringToBytes(strPacket);
             if (serialPort1.IsOpen)
             {
@@ -151,7 +124,7 @@ namespace SerialTest
 
             string strHeader = BitConverter.ToString(header).Replace("-", string.Empty);
             int len = header[2];
-            Response("header:" + strHeader + " length:" + len);
+             if (debug) Response("header:" + strHeader + " length:" + len);
 
             //データ部読み取り
 
@@ -163,7 +136,7 @@ namespace SerialTest
                     data[i] = (byte)serialPort1.ReadByte();
                 }
                 string strData = BitConverter.ToString(data).Replace("-", string.Empty);
-                Response("data:" + strData);
+                if (debug) Response("data:" + strData);
             }
 
             //sum読み取り
@@ -189,49 +162,21 @@ namespace SerialTest
             }
 
             string strSum = BitConverter.ToString(chkSum).Replace("-", string.Empty);
-            Response("SUM:" + strSum);
+            if (debug) Response("SUM:" + strSum);
             //Response("mySUM:" + calcSUM(bytesToString(header) + bytesToString(data)).ToString("X2"));
 
-            
+            //スキャンデータが来たらキー入力に変換&LEDに反映
             if (header[1] == 0x01)
             {
                 string pdaslider = readSliderPacket(data);
-                updateKeys(pdaslider);
-                sendPacket(assembleTouchedSliderLED(pdaslider));
+                slider.UpdateKeys(pdaslider);
+                sendPacket(commands[3] + slider.assembleTouchedSliderLED(pdaslider));
                 //sliderResponse("pdaSlider:" + pdaslider);
-                lastPdaSlider = pdaslider;
             }
 
         }
 
-        private void updateKeys(string pdaslider)
-        {
-            string uniSlider = "";
-            //forを使って1文字ずつ処理する
-            for (int i = 0; i < 16; i++)
-            {
-                if (pdaslider[i*2] == '1' || pdaslider[(i*2)+1] == '1')
-                {
-                    uniSlider += '1';
-                }
-                else
-                {
-                    uniSlider += '0';
-                }
-                if (lastUniSlider[i] != uniSlider[i])
-                {
-                    if(uniSlider[i] == '1')//0->1
-                    {
-                        win32api.keybd_event(keys[i], 0, 0, (UIntPtr)0);
-                    }
-                    else//1->0
-                    {
-                        win32api.keybd_event(keys[i], 0, 2, (UIntPtr)0);//(byte)win32api.MapVirtualKey(keys[i], 3)
-                    }
-                }
-            }
-            lastUniSlider = uniSlider;
-        }
+        
 
         private string readSliderPacket(byte[] datas)
         {
@@ -258,33 +203,14 @@ namespace SerialTest
             return pdaslider;
         }
 
-        private string assembleTouchedSliderLED(string pdaSlider)
-        {
-            string basecolor = "00fee6";
-            string touchcolor = "fefefe";
-            string result = commands[3];
-
-            foreach (char c in pdaSlider)
-            {
-                if (c == '0')
-                {
-                    result += basecolor;
-                }
-                else
-                {
-                    result += touchcolor;
-                }
-            }
-            result += calcSUM(result).ToString("X2");
-
-            return result;
-        }
+        
 
         private void button3_Click(object sender, EventArgs e)
         {
             serialPort1.Close();
         }
 
+        //16進数文字列をbyte[]に
         public static byte[] hexStringToBytes(string str)
         {
             int length = str.Length / 2;
@@ -297,6 +223,7 @@ namespace SerialTest
             return bytes;
         }
 
+        //byte[]を16進数文字列に
         private static string bytesToString(byte[] bytes)
         {
             return BitConverter.ToString(bytes).Replace("-", string.Empty);
@@ -343,6 +270,197 @@ namespace SerialTest
         private void scanStopButton_Click(object sender, EventArgs e)
         {
             timer1.Stop();
+        }
+    }
+
+
+    // Win32APIを呼び出すためのクラス
+    public class win32api
+    {
+        [DllImport("user32.dll")]
+        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+
+        // 仮想キーコードをスキャンコードに変換
+        [DllImport("user32.dll", EntryPoint = "MapVirtualKeyA")]
+        public extern static int MapVirtualKey(
+            int wCode, int wMapType);
+    }
+
+    /// <summary>
+    /// スライダー周り
+    /// </summary>
+    abstract class slider
+    {
+        public abstract string Basecolor { get; set; }
+        public abstract string Touchcolor { get; set; }
+        public abstract byte[] GameKeys { get; set; }
+        public abstract void UpdateKeys(string pdaslider);
+
+        /// <summary>
+        /// スライダーのLED制御用パケット生成
+        /// 単純にタッチした個所の色が変わるだけ
+        /// </summary>
+        /// <param name="pdaSlider">32のセンサの値を0or1で示したstring</param>
+        /// <returns></returns>
+        public string assembleTouchedSliderLED(string pdaSlider)
+        {
+            string result = "";
+
+            foreach (char c in pdaSlider)
+            {
+                if (c == '0')
+                {
+                    result += Basecolor;
+                }
+                else
+                {
+                    result += Touchcolor;
+                }
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// チュウニズム用
+    /// </summary>
+    class Chunithm:slider
+    {
+        public override string Basecolor { get; set; } = "00fee6";
+        public override string Touchcolor { get; set; }  = "fefefe";
+        private string UniSlider = "0000000000000000";
+        private string LastUniSlider = "0000000000000000";
+
+        public override byte[] GameKeys { get; set; } =
+        {
+            (byte)Keys.A,
+            (byte)Keys.Z,
+            (byte)Keys.S,
+            (byte)Keys.X,
+            (byte)Keys.D,
+            (byte)Keys.C,
+            (byte)Keys.F,
+            (byte)Keys.V,
+            (byte)Keys.G,
+            (byte)Keys.B,
+            (byte)Keys.H,
+            (byte)Keys.N,
+            (byte)Keys.J,
+            (byte)Keys.M,
+            (byte)Keys.K,
+            (byte)188
+        };
+
+        public override void UpdateKeys(string pdaslider)
+        {
+            UniSlider = "";
+            //forを使って1文字ずつ処理する
+            for (int i = 0; i < 16; i++)
+            {
+                if (pdaslider[i * 2] == '1' || pdaslider[(i * 2) + 1] == '1')
+                {
+                    UniSlider += '1';
+                }
+                else
+                {
+                    UniSlider += '0';
+                }
+                if (LastUniSlider[i] != UniSlider[i])
+                {
+                    if (UniSlider[i] == '1')//0->1
+                    {
+                        win32api.keybd_event(GameKeys[i], 0, 0, (UIntPtr)0);
+                    }
+                    else//1->0
+                    {
+                        win32api.keybd_event(GameKeys[i], 0, 2, (UIntPtr)0);//(byte)win32api.MapVirtualKey(keys[i], 3)
+                    }
+                }
+            }
+            LastUniSlider = UniSlider;
+        }
+    }
+
+    /// <summary>
+    /// Nostalgia要
+    /// </summary>
+    class Nostalgia:slider
+    {
+        public override string Basecolor { get; set; } = "fefefe";
+        public override string Touchcolor { get; set; } = "00fee6";
+
+        private string NostalKeys = "00000000000000000000000000000000";
+        private string LastNostalKeys = "00000000000000000000000000000000";
+
+
+        public override byte[] GameKeys { get; set; } =
+        {
+            (byte)Keys.D1,//1
+            (byte)Keys.D2,
+            (byte)Keys.D3,
+            (byte)Keys.D4,
+            (byte)Keys.D5,
+            (byte)Keys.D6,
+            (byte)Keys.D7,
+            (byte)Keys.D8,
+            (byte)Keys.D9,
+            (byte)Keys.D0,
+            (byte)Keys.Q,
+            (byte)Keys.W,
+            (byte)Keys.E,
+            (byte)Keys.R,
+            (byte)Keys.T,
+            (byte)Keys.Y,
+            (byte)Keys.U,
+            (byte)Keys.I,
+            (byte)Keys.O,
+            (byte)Keys.P,
+            (byte)Keys.A,
+            (byte)Keys.S,
+            (byte)Keys.D,
+            (byte)Keys.F,
+            (byte)Keys.G,
+            (byte)Keys.H,
+            (byte)Keys.J,
+            (byte)Keys.K//,//28
+            //(byte)Keys.L,
+            //(byte)Keys.Z,
+            //(byte)Keys.X,
+            //(byte)Keys.C,
+            //(byte)Keys.V,
+            //(byte)Keys.B,
+            //(byte)Keys.N,
+            //(byte)Keys.M
+        };
+
+        public override void UpdateKeys(string pdaslider)
+        {
+            NostalKeys = "";
+            //forを使って1文字ずつ処理する
+            for (int i = 0; i < 32; i++)
+            {
+                if (pdaslider[i] == '1')
+                {
+                    NostalKeys += '1';
+                }
+                else
+                {
+                    NostalKeys += '0';
+                }
+                if (LastNostalKeys[i] != NostalKeys[i] && 1<i && i < 29)
+                {
+                    if (NostalKeys[i] == '1')//0->1
+                    {
+                        win32api.keybd_event(GameKeys[i-2], 0, 0, (UIntPtr)0);
+                    }
+                    else//1->0
+                    {
+                        win32api.keybd_event(GameKeys[i-2], 0, 2, (UIntPtr)0);//(byte)win32api.MapVirtualKey(keys[i], 3)
+                    }
+                }
+            }
+            LastNostalKeys = NostalKeys;
         }
     }
 }
