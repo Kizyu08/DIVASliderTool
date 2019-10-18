@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SerialTest", "SerialTest\SerialTest.csproj", "{971DB4C2-4BB7-45E0-B2BC-330F796E15F9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DIVASliderTool", "SerialTest\DIVASliderTool.csproj", "{971DB4C2-4BB7-45E0-B2BC-330F796E15F9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
