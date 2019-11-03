@@ -13,11 +13,12 @@ using System.Runtime.InteropServices;
 using System.Threading;
 
 
-namespace SerialTest
+namespace DIVASliderTool
 {
     public partial class Form1 : Form
     {
         bool debug = true;
+        bool sending = false;
 
         string[] commands =
         {
@@ -31,10 +32,26 @@ namespace SerialTest
             //LEDダンプデータ？
             "ff02613f22fb2831e83e43d05756b87068a0897b89a18d71baa059d3b241eca454ee9469ee837fee7395ee62abee52c0ee41d6ee31ecee33efdc37f1ca3bf3b73ff5a443f79147f97f4bfb6c4ffdfc5964e45579c8528fac4fa5914cbb7549d05946e63d4368ff02613f22fa2b35e24447ca5d5ab2766c9b8e7f83a7916bc0a453d9b143eea059ee906eee7f84ee6f9aee5eb0ee4ec5ee3ddbee30eeea34f0d838f2c53cf4b240f69f44f88d48fa7a4cfc6753f95769dd547ec25194a64eaa8a4bc06e48d55345eb374269ff02613f27f43139dc4a4cc5635ead7c719594837dad9666c6a84edfad48ee9c5eee8c74ee7b89ee6b9fee5ab5ee4acbee39e0ee31eee635f0d339f2c13df4ae41f69b45f88849fa764dfc6358f2566ed75384bb50999f4daf834ac56847db4c44f0304165"
         };
-        
+
+        int mode = 0;
+        string[] modes =
+        {
+            "ProjectDIVA",
+            "seaurchin",
+            "Nostalgia",
+            "Musinx 4Key",
+            "Musinx 6Key"
+        };
 
         //slider slider = new Chunithm();
-        slider slider = new NostalgiaTest();
+        slider[] slider =
+        {
+            new Chunithm(),
+            new Chunithm(),
+            new Nostalgia(),
+            new MUSYNX6(),
+            new MUSYNX6()
+        };
 
         public Form1()
         {
@@ -53,8 +70,14 @@ namespace SerialTest
             {
                 TXcomboBox.Items.Add(command);
             }
+            foreach (string mode in modes)
+            {
+                ModeComboBox.Items.Add(mode);
+            }
+            ModeComboBox.SelectedIndex = 0;
             if (portComboBox.Items.Count > 0)
                 portComboBox.SelectedIndex = 0;
+            logCheckBox1.Checked = debug;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -79,12 +102,14 @@ namespace SerialTest
 
         private void sendPacket(string strPacket)
         {
+            sending = true;
             strPacket += calcSUM(strPacket).ToString("X2");
             byte[] packet = hexStringToBytes(strPacket);
             if (serialPort1.IsOpen)
             {
                 serialPort1.Write(packet, 0, packet.Length);
             }
+            sending = false;
         }
 
         delegate void SetTextCallback(string text);
@@ -169,9 +194,9 @@ namespace SerialTest
             if (header[1] == 0x01)
             {
                 string pdaslider = readSliderPacket(data);
-                slider.UpdateKeys(pdaslider);
-                sendPacket(commands[3] + slider.assembleTouchedSliderLED(pdaslider));
-                //sliderResponse("pdaSlider:" + pdaslider);
+                slider[mode].UpdateKeys(pdaslider);
+                sendPacket(commands[3] + slider[mode].assembleTouchedSliderLED(pdaslider));
+                if (debug) sliderResponse(slider[mode].GetKeyState());
             }
 
         }
@@ -180,19 +205,6 @@ namespace SerialTest
 
         private string readSliderPacket(byte[] datas)
         {
-            //ビットシフト式
-            //for (int j = 0; j < 16; j++)
-            //{
-            //    if (data[j * 2] != 0 | data[(j * 2) + 1] != 0)
-            //    {
-            //        uniSlider = (ushort)(uniSlider | (1 << j));
-            //    }
-            //    else
-            //    {
-            //        uniSlider = (ushort)(uniSlider & ~(1 << j)); ;
-            //    }
-            //}
-            //return Convert.ToString(uniSlider, 2).PadLeft(16, '0');
             string pdaslider = "";
             int j;
             foreach(byte data in datas)
@@ -207,7 +219,9 @@ namespace SerialTest
 
         private void button3_Click(object sender, EventArgs e)
         {
-            serialPort1.Close();
+            if (!sending){
+                serialPort1.Close();
+            }
         }
 
         //16進数文字列をbyte[]に
@@ -269,7 +283,17 @@ namespace SerialTest
 
         private void scanStopButton_Click(object sender, EventArgs e)
         {
-            timer1.Stop();
+            int i = portComboBox.SelectedIndex;
+        }
+
+        private void logCheckBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            debug = logCheckBox1.Checked;
+        }
+
+        private void ModeComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            mode = ModeComboBox.SelectedIndex;
         }
     }
 
@@ -295,14 +319,14 @@ namespace SerialTest
         public abstract string Touchcolor { get; set; }
         public abstract byte[] GameKeys { get; set; }
         public abstract void UpdateKeys(string pdaslider);
-
+        public abstract string GetKeyState();
         /// <summary>
         /// スライダーのLED制御用パケット生成
         /// 単純にタッチした個所の色が変わるだけ
         /// </summary>
         /// <param name="pdaSlider">32のセンサの値を0or1で示したstring</param>
         /// <returns></returns>
-        public string assembleTouchedSliderLED(string pdaSlider)
+        public virtual string assembleTouchedSliderLED(string pdaSlider)
         {
             string result = "";
 
@@ -323,7 +347,7 @@ namespace SerialTest
     }
 
     /// <summary>
-    /// チュウニズム用
+    /// チュウニズム
     /// </summary>
     class Chunithm:slider
     {
@@ -331,6 +355,11 @@ namespace SerialTest
         public override string Touchcolor { get; set; }  = "fefefe";
         private string UniSlider = "0000000000000000";
         private string LastUniSlider = "0000000000000000";
+
+        public override string GetKeyState()
+        {
+            return UniSlider;
+        }
 
         public override byte[] GameKeys { get; set; } =
         {
@@ -383,16 +412,20 @@ namespace SerialTest
     }
 
     /// <summary>
-    /// Nostalgia要
+    /// Nostalgia
     /// </summary>
     class Nostalgia:slider
     {
         public override string Basecolor { get; set; } = "fefefe";
-        public override string Touchcolor { get; set; } = "00fee6";
+        public override string Touchcolor { get; set; } = "000000";
 
         private string NostalKeys = "00000000000000000000000000000000";
         private string LastNostalKeys = "00000000000000000000000000000000";
 
+        public override string GetKeyState()
+        {
+            return NostalKeys;
+        }
 
         public override byte[] GameKeys { get; set; } =
         {
@@ -433,6 +466,31 @@ namespace SerialTest
             //(byte)Keys.N,
             //(byte)Keys.M
         };
+
+        public override string assembleTouchedSliderLED(string pdaSlider)
+        {
+            string result = "";
+
+            for (int i = 0;  i<pdaSlider.Length; i++)
+            {
+                if(i<3 || i > 28)
+                {
+                    result += "000000";
+                }
+                else
+                {
+                    if (pdaSlider[i] == '0')
+                    {
+                        result += Basecolor;
+                    }
+                    else
+                    {
+                        result += Touchcolor;
+                    }
+                }
+            }
+            return result;
+        }
 
         public override void UpdateKeys(string pdaslider)
         {
@@ -465,48 +523,61 @@ namespace SerialTest
     }
 
     /// <summary>
-    /// spice対策テスト
+    /// MUSYNX 6Key
     /// </summary>
-    class NostalgiaTest : slider
+    class MUSYNX6 : slider
     {
         public override string Basecolor { get; set; } = "fefefe";
-        public override string Touchcolor { get; set; } = "00fee6";
+        public override string Touchcolor { get; set; } = "000000";
+        private string[] keyColors =
+        {
+            "93e98e",
+            "9af0d0",
+            "96dbee",
+            "be95fd",
+            "e886f4",
+            "ee9ac2"
+        };
 
-        private string NostalKeys = "00000000000000000000000000000000";
-        private string LastNostalKeys = "00000000000000000000000000000000";
+        private string MUS6Keys = "000000";
+        private string LastMUS6Keys = "000000";
 
+        public override string GetKeyState()
+        {
+            return MUS6Keys;
+        }
 
         public override byte[] GameKeys { get; set; } =
         {
-            (byte)Keys.D1,//1
-            (byte)Keys.D2,
-            (byte)Keys.D3,
-            (byte)Keys.D4,
-            (byte)Keys.D5,
-            (byte)Keys.D6,
-            (byte)Keys.D7,
-            (byte)Keys.D8,
-            (byte)Keys.D9,
-            (byte)Keys.D0,
-            (byte)Keys.Q,
-            (byte)Keys.W,
-            (byte)Keys.E,
-            (byte)Keys.R,
-            (byte)Keys.T,
-            (byte)Keys.Y,
-            (byte)Keys.U,
-            (byte)Keys.I,
-            (byte)Keys.O,
-            (byte)Keys.P,
-            (byte)Keys.A,
+            //(byte)Keys.D1,//1
+            //(byte)Keys.D2,
+            //(byte)Keys.D3,
+            //(byte)Keys.D4,
+            //(byte)Keys.D5,
+            //(byte)Keys.D6,
+            //(byte)Keys.D7,
+            //(byte)Keys.D8,
+            //(byte)Keys.D9,
+            //(byte)Keys.D0,
+            //(byte)Keys.Q,
+            //(byte)Keys.W,
+            //(byte)Keys.E,
+            //(byte)Keys.R,
+            //(byte)Keys.T,
+            //(byte)Keys.Y,
+            //(byte)Keys.U,
+            //(byte)Keys.I,
+            //(byte)Keys.O,
+            //(byte)Keys.P,
+            //(byte)Keys.A,
             (byte)Keys.S,
             (byte)Keys.D,
             (byte)Keys.F,
-            (byte)Keys.G,
-            (byte)Keys.H,
+            //(byte)Keys.G,
+            //(byte)Keys.H,
             (byte)Keys.J,
-            (byte)Keys.K//,//28
-            //(byte)Keys.L,
+            (byte)Keys.K,
+            (byte)Keys.L//,
             //(byte)Keys.Z,
             //(byte)Keys.X,
             //(byte)Keys.C,
@@ -516,23 +587,60 @@ namespace SerialTest
             //(byte)Keys.M
         };
 
-        public override void UpdateKeys(string pdaslider)
+        public override string assembleTouchedSliderLED(string pdaSlider)
         {
-            NostalKeys = "";
-            //forを使って1文字ずつ処理する
-            for (int i = 0; i < 32; i++)
+            string result = "";
+
+            for (int i = 0; i < pdaSlider.Length; i++)
             {
-                if (pdaslider[i] == '1')
+                if (i < 1 || i > 30)
                 {
-                    NostalKeys += '1';
+                    result += "000011";
                 }
                 else
                 {
-                    NostalKeys += '0';
+                    switch ((i-1)/5){
+                        case 0:
+                            result += ((MUS6Keys[0] == 1) ? Touchcolor : keyColors[0]);
+                            break;
+                        case 1:
+                            result += ((MUS6Keys[1] == 1) ? Touchcolor : keyColors[1]);
+                            break;
+                        case 2:
+                            result += ((MUS6Keys[2] == 1) ? Touchcolor : keyColors[2]);
+                            break;
+                        case 3:
+                            result += ((MUS6Keys[3] == 1) ? Touchcolor : keyColors[3]);
+                            break;
+                        case 4:
+                            result += ((MUS6Keys[4] == 1) ? Touchcolor : keyColors[4]);
+                            break;
+                        case 5:
+                            result += ((MUS6Keys[5] == 1) ? Touchcolor : keyColors[5]);
+                            break;
+                    }
                 }
-                if (LastNostalKeys[i] != NostalKeys[i] && 1 < i && i < 29)
+            }
+            return result;
+        }
+
+        public override void UpdateKeys(string pdaslider)
+        {
+            MUS6Keys = "";
+            //forを使って1文字ずつ処理する
+            for (int i = 0; i < 6; i++)
+            {
+                if (pdaslider[(i * 5) + 1] == '1' || pdaslider[(i * 5) + 2] == '1' || pdaslider[(i * 5) + 3] == '1' || pdaslider[(i * 5) + 4] == '1' || pdaslider[(i * 5) + 5] == '1')
                 {
-                    if (NostalKeys[i] == '1')//0->1
+                    MUS6Keys += '1';
+                }
+                else
+                {
+                    MUS6Keys += '0';
+                }
+                if (LastMUS6Keys[i] != MUS6Keys[i])
+                {
+                    if (MUS6Keys[i] == '1')//0->1
                     {
                         win32api.keybd_event(GameKeys[0], 0x16, 0, (UIntPtr)0);
                     }
@@ -542,7 +650,7 @@ namespace SerialTest
                     }
                 }
             }
-            LastNostalKeys = NostalKeys;
+            LastMUS6Keys = MUS6Keys;
         }
     }
 }

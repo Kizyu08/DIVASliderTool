@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SerialTest.Properties
+namespace DIVASliderTool.Properties
 {
 
 
