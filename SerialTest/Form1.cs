@@ -49,7 +49,7 @@ namespace DIVASliderTool
             new Chunithm(),
             new Chunithm(),
             new Nostalgia(),
-            new MUSYNX6(),
+            new MUSYNX4(),
             new MUSYNX6()
         };
 
@@ -143,7 +143,12 @@ namespace DIVASliderTool
         {
             //ヘッダ読み取り
             byte[] header = new byte[3];
+
             header[0] = (byte)serialPort1.ReadByte();
+            if (header[0] != 0xff)
+            {
+                while (header[0] != 0xff) header[0] = (byte)serialPort1.ReadByte();
+            }
             header[1] = (byte)serialPort1.ReadByte();
             header[2] = (byte)serialPort1.ReadByte();
 
@@ -159,6 +164,7 @@ namespace DIVASliderTool
                 for (int i = 0; i < len; i++)
                 {
                     data[i] = (byte)serialPort1.ReadByte();
+                    if (data[i] == 0xff) return;
                 }
                 string strData = BitConverter.ToString(data).Replace("-", string.Empty);
                 if (debug) Response("data:" + strData);
@@ -651,6 +657,131 @@ namespace DIVASliderTool
                 }
             }
             LastMUS6Keys = MUS6Keys;
+        }
+    }
+
+    /// <summary>
+    /// MUSYNX 4Key
+    /// </summary>
+    class MUSYNX4 : slider
+    {
+        public override string Basecolor { get; set; } = "fefefe";
+        public override string Touchcolor { get; set; } = "000000";
+        private string[] keyColors =
+        {
+            "9af0d0",
+            "96dbee",
+            "be95fc",
+            "e886f4"
+        };
+
+        private string MUS4Keys = "0000";
+        private string LastMUS4Keys = "0000";
+
+        public override string GetKeyState()
+        {
+            return MUS4Keys;
+        }
+
+        public override byte[] GameKeys { get; set; } =
+        {
+            //(byte)Keys.D1,//1
+            //(byte)Keys.D2,
+            //(byte)Keys.D3,
+            //(byte)Keys.D4,
+            //(byte)Keys.D5,
+            //(byte)Keys.D6,
+            //(byte)Keys.D7,
+            //(byte)Keys.D8,
+            //(byte)Keys.D9,
+            //(byte)Keys.D0,
+            //(byte)Keys.Q,
+            //(byte)Keys.W,
+            //(byte)Keys.E,
+            //(byte)Keys.R,
+            //(byte)Keys.T,
+            //(byte)Keys.Y,
+            //(byte)Keys.U,
+            //(byte)Keys.I,
+            //(byte)Keys.O,
+            //(byte)Keys.P,
+            //(byte)Keys.A,
+            //(byte)Keys.S,
+            (byte)Keys.D,
+            (byte)Keys.F,
+            //(byte)Keys.G,
+            //(byte)Keys.H,
+            (byte)Keys.J,
+            (byte)Keys.K//,
+            //byte)Keys.L//,
+            //(byte)Keys.Z,
+            //(byte)Keys.X,
+            //(byte)Keys.C,
+            //(byte)Keys.V,
+            //(byte)Keys.B,
+            //(byte)Keys.N,
+            //(byte)Keys.M
+        };
+
+        public override string assembleTouchedSliderLED(string pdaSlider)
+        {
+            string result = "";
+
+            for (int i = 0; i < pdaSlider.Length; i++)
+            {
+                switch (i / 8)
+                {
+                    case 0:
+                        result += ((MUS4Keys[0] == '1') ? Touchcolor : keyColors[0]);
+                        break;
+                    case 1:
+                        result += ((MUS4Keys[1] == '1') ? Touchcolor : keyColors[1]);
+                        break;
+                    case 2:
+                        result += ((MUS4Keys[2] == '1') ? Touchcolor : keyColors[2]);
+                        break;
+                    case 3:
+                        result += ((MUS4Keys[3] == '1') ? Touchcolor : keyColors[3]);
+                        break;
+                }
+            }
+            return result;
+        }
+
+        public override void UpdateKeys(string pdaslider)
+        {
+            MUS4Keys = "";
+            //forを使って1文字ずつ処理する
+            for (int i = 0; i < 4; i++)
+            {
+                if (pdaslider[i * 8] == '1'
+                    || pdaslider[(i * 8) + 1] == '1' 
+                    || pdaslider[(i * 8) + 2] == '1' 
+                    || pdaslider[(i * 5) + 3] == '1' 
+                    || pdaslider[(i * 5) + 4] == '1'
+                    || pdaslider[(i * 5) + 5] == '1'
+                    || pdaslider[(i * 5) + 6] == '1'
+                    || pdaslider[(i * 5) + 7] == '1')
+                {
+                    MUS4Keys += '1';
+                }
+                else
+                {
+                    MUS4Keys += '0';
+                }
+                if (LastMUS4Keys[i] != MUS4Keys[i])
+                {
+                    if (MUS4Keys[i] == '1')//0->1
+                    {
+                        win32api.keybd_event(GameKeys[i], 0, 0, (UIntPtr)0);
+                    }
+                    else//1->0
+                    {
+                        win32api.keybd_event(GameKeys[i], 0, 2, (UIntPtr)0);//(byte)win32api.MapVirtualKey(keys[i], 3)
+                    }
+                }
+            }
+            LastMUS4Keys = MUS4Keys;
         }
     }
 }
