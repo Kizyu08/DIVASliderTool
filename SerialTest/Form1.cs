@@ -601,22 +601,22 @@ namespace DIVASliderTool
                 {
                     switch ((i-1)/5){
                         case 0:
-                            result += ((MUS6Keys[0] == 1) ? Touchcolor : keyColors[0]);
+                            result += ((MUS6Keys[0] == '1') ? Touchcolor : keyColors[0]);
                             break;
                         case 1:
-                            result += ((MUS6Keys[1] == 1) ? Touchcolor : keyColors[1]);
+                            result += ((MUS6Keys[1] == '1') ? Touchcolor : keyColors[1]);
                             break;
                         case 2:
-                            result += ((MUS6Keys[2] == 1) ? Touchcolor : keyColors[2]);
+                            result += ((MUS6Keys[2] == '1') ? Touchcolor : keyColors[2]);
                             break;
                         case 3:
-                            result += ((MUS6Keys[3] == 1) ? Touchcolor : keyColors[3]);
+                            result += ((MUS6Keys[3] == '1') ? Touchcolor : keyColors[3]);
                             break;
                         case 4:
-                            result += ((MUS6Keys[4] == 1) ? Touchcolor : keyColors[4]);
+                            result += ((MUS6Keys[4] == '1') ? Touchcolor : keyColors[4]);
                             break;
                         case 5:
-                            result += ((MUS6Keys[5] == 1) ? Touchcolor : keyColors[5]);
+                            result += ((MUS6Keys[5] == '1') ? Touchcolor : keyColors[5]);
                             break;
                     }
                 }
@@ -642,11 +642,11 @@ namespace DIVASliderTool
                 {
                     if (MUS6Keys[i] == '1')//0->1
                     {
-                        win32api.keybd_event(GameKeys[0], 0x16, 0, (UIntPtr)0);
+                        win32api.keybd_event(GameKeys[i], 0, 0, (UIntPtr)0);
                     }
                     else//1->0
                     {
-                        win32api.keybd_event(GameKeys[0], 0x16, 2, (UIntPtr)0);//(byte)win32api.MapVirtualKey(keys[i], 3)
+                        win32api.keybd_event(GameKeys[i], 0, 2, (UIntPtr)0);//(byte)win32api.MapVirtualKey(keys[i], 3)
                     }
                 }
             }
