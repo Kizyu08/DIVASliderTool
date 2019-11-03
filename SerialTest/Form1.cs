@@ -196,7 +196,7 @@ namespace DIVASliderTool
                 string pdaslider = readSliderPacket(data);
                 slider[mode].UpdateKeys(pdaslider);
                 sendPacket(commands[3] + slider[mode].assembleTouchedSliderLED(pdaslider));
-                if (debug) sliderResponse(slider[mode].GetKeyState());
+                sliderResponse(slider[mode].GetKeyState());
             }
 
         }
@@ -252,7 +252,7 @@ namespace DIVASliderTool
             }
             packet += calcSUM(packet).ToString("X2");
             sendPacket(packet);
-            Response("Send:" + packet);
+            if(debug)Response("Send:" + packet);
 
         }
 
@@ -534,7 +534,7 @@ namespace DIVASliderTool
             "93e98e",
             "9af0d0",
             "96dbee",
-            "be95fd",
+            "be95fc",
             "e886f4",
             "ee9ac2"
         };
@@ -595,7 +595,7 @@ namespace DIVASliderTool
             {
                 if (i < 1 || i > 30)
                 {
-                    result += "000011";
+                    result += "000000";
                 }
                 else
                 {
