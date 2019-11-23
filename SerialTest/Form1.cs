@@ -40,7 +40,8 @@ namespace DIVASliderTool
             "seaurchin",
             "Nostalgia",
             "Musinx 4Key",
-            "Musinx 6Key"
+            "Musinx 6Key",
+            "SEGAToolsChunithm"
         };
 
         //slider slider = new Chunithm();
@@ -50,7 +51,8 @@ namespace DIVASliderTool
             new Chunithm(),
             new Nostalgia(),
             new MUSYNX4(),
-            new MUSYNX6()
+            new MUSYNX6(),
+            new SEGAToolsChuni()
         };
 
         public Form1()
@@ -784,4 +786,102 @@ namespace DIVASliderTool
             LastMUS4Keys = MUS4Keys;
         }
     }
+
+    class SEGAToolsChuni : slider
+    {
+        public override string Basecolor { get; set; } = "fefefe";
+        public override string Touchcolor { get; set; } = "000000";
+
+        private string ChuniKeys = "00000000000000000000000000000000";
+        private string LastChuniKeys = "00000000000000000000000000000000";
+
+        public override string GetKeyState()
+        {
+            return ChuniKeys;
+        }
+
+        public override byte[] GameKeys { get; set; } =
+        {
+            (byte)Keys.D1,//1
+            (byte)Keys.A,
+            (byte)Keys.Q,
+            (byte)Keys.Z,
+            (byte)Keys.D2,
+            (byte)Keys.S,
+            (byte)Keys.W,
+            (byte)Keys.X,
+            (byte)Keys.D3,
+            (byte)Keys.D,
+            (byte)Keys.E,
+            (byte)Keys.C,
+            (byte)Keys.D4,
+            (byte)Keys.F,
+            (byte)Keys.R,
+            (byte)Keys.V,
+            (byte)Keys.D5,
+            (byte)Keys.G,
+            (byte)Keys.T,
+            (byte)Keys.B,
+            (byte)Keys.D6,
+            (byte)Keys.H,
+            (byte)Keys.Y,
+            (byte)Keys.N,
+            (byte)Keys.D7,
+            (byte)Keys.J,
+            (byte)Keys.U,
+            (byte)Keys.M,
+            (byte)Keys.D8,
+            (byte)Keys.K,
+            (byte)Keys.I,
+            (byte)Keys.Oemcomma
+        };
+
+        public override string assembleTouchedSliderLED(string pdaSlider)
+        {
+            string result = "";
+
+            for (int i = 0; i < pdaSlider.Length; i++)
+            {
+                if (pdaSlider[i] == '0')
+                {
+                    result += Basecolor;
+                }
+                else
+                {
+                    result += Touchcolor;
+                }
+            }
+            return result;
+        }
+
+        public override void UpdateKeys(string pdaslider)
+        {
+            ChuniKeys = "";
+            //forを使って1文字ずつ処理する
+            for (int i = 0; i < 32; i++)
+            {
+                if (pdaslider[i] == '1')
+                {
+                    ChuniKeys += '1';
+                }
+                else
+                {
+                    ChuniKeys += '0';
+                }
+                if (LastChuniKeys[i] != ChuniKeys[i])
+                {
+                    if (ChuniKeys[i] == '1')//0->1
+                    {
+                        win32api.keybd_event(GameKeys[i], 0, 0, (UIntPtr)0);
+                    }
+                    else//1->0
+                    {
+                        win32api.keybd_event(GameKeys[i], 0, 2, (UIntPtr)0);//(byte)win32api.MapVirtualKey(keys[i], 3)
+                    }
+                }
+            }
+            LastChuniKeys = ChuniKeys;
+        }
+    }
+
 }
