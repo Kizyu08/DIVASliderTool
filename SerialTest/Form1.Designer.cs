@@ -44,6 +44,7 @@
             this.scanStopButton = new System.Windows.Forms.Button();
             this.logCheckBox1 = new System.Windows.Forms.CheckBox();
             this.ModeComboBox = new System.Windows.Forms.ComboBox();
+            this.serialPort2 = new System.IO.Ports.SerialPort(this.components);
             this.SuspendLayout();
             // 
             // serialPort1
@@ -175,6 +176,11 @@
             this.ModeComboBox.TabIndex = 12;
             this.ModeComboBox.SelectedIndexChanged += new System.EventHandler(this.ModeComboBox_SelectedIndexChanged);
             // 
+            // serialPort2
+            // 
+            this.serialPort2.PortName = "COM2";
+            this.serialPort2.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(this.serialPort2_DataReceived);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -218,6 +224,7 @@
         private System.Windows.Forms.Button scanStopButton;
         private System.Windows.Forms.CheckBox logCheckBox1;
         private System.Windows.Forms.ComboBox ModeComboBox;
+        private System.IO.Ports.SerialPort serialPort2;
     }
 }
 

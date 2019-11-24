@@ -45,7 +45,7 @@ namespace DIVASliderTool
         };
 
         //slider slider = new Chunithm();
-        slider[] slider =
+        slider[] sliders =
         {
             new Chunithm(),
             new Chunithm(),
@@ -82,7 +82,7 @@ namespace DIVASliderTool
             logCheckBox1.Checked = debug;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void openPort1()
         {
             serialPort1.BaudRate = 115200;
             serialPort1.Parity = Parity.None;
@@ -91,6 +91,22 @@ namespace DIVASliderTool
             serialPort1.Handshake = Handshake.None;
             serialPort1.PortName = portComboBox.Text;
             serialPort1.Open();
+        }
+
+        private void openPort2()
+        {
+            serialPort2.BaudRate = 115200;
+            serialPort2.Parity = Parity.None;
+            serialPort2.DataBits = 8;
+            serialPort2.StopBits = StopBits.One;
+            serialPort2.Handshake = Handshake.None;
+            serialPort2.PortName = "COM10";
+            serialPort2.Open();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            openPort1();
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -202,14 +218,39 @@ namespace DIVASliderTool
             if (header[1] == 0x01)
             {
                 string pdaslider = readSliderPacket(data);
-                slider[mode].UpdateKeys(pdaslider);
-                sendPacket(commands[3] + slider[mode].assembleTouchedSliderLED(pdaslider));
-                sliderResponse(slider[mode].GetKeyState());
+                sliders[mode].UpdateKeys(pdaslider);
+                if(mode != 5)sendPacket(commands[3] + sliders[mode].assembleTouchedSliderLED(pdaslider));
+                sliderResponse(sliders[mode].GetKeyState());
             }
 
         }
-
         
+        private void serialPort2_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            byte[] LEDData = new byte[100];
+            if (LEDData[0] != 0xAA)
+            {
+                while (LEDData[0] != 0xAA) LEDData[0] = (byte)serialPort2.ReadByte();
+            }
+            
+            for (int i = 1; i < 100; i++)
+            {
+                LEDData[i] = (byte)serialPort2.ReadByte();
+                //if (LEDData[i] == 0xff) return;
+            }
+            string strData = BitConverter.ToString(LEDData).Replace("-", string.Empty);
+            if (debug) Response("LEDdata:" + strData);
+            if (debug) Response("LEDPacket:" + commands[3] + strData.Substring(4, 192));
+            string[] LEDArr = strData.Substring(4, 192).SubstringAtCount(6);
+            Array.Reverse(LEDArr);
+            string LEDPacket = "";
+            foreach (string LEDRGB in LEDArr)
+            {
+                LEDPacket += LEDRGB;
+            } 
+            sendPacket(commands[3] + LEDPacket);
+
+        }
 
         private string readSliderPacket(byte[] datas)
         {
@@ -302,9 +343,13 @@ namespace DIVASliderTool
         private void ModeComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             mode = ModeComboBox.SelectedIndex;
+            if (mode == 5)
+            {
+                openPort2();
+            }
         }
-    }
 
+    }
 
     // Win32APIを呼び出すためのクラス
     public class win32api
@@ -884,4 +929,32 @@ namespace DIVASliderTool
         }
     }
 
+}
+
+public static class StringExtensions
+{
+    public static string[] SubstringAtCount(this string self, int count)
+    {
+        var result = new List<string>();
+        var length = (int)Math.Ceiling((double)self.Length / count);
+
+        for (int i = 0; i < length; i++)
+        {
+            int start = count * i;
+            if (self.Length <= start)
+            {
+                break;
+            }
+            if (self.Length < start + count)
+            {
+                result.Add(self.Substring(start));
+            }
+            else
+            {
+                result.Add(self.Substring(start, count));
+            }
+        }
+
+        return result.ToArray();
+    }
 }
