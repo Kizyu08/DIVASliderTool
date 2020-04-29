@@ -45,6 +45,8 @@
             this.logCheckBox1 = new System.Windows.Forms.CheckBox();
             this.ModeComboBox = new System.Windows.Forms.ComboBox();
             this.serialPort2 = new System.IO.Ports.SerialPort(this.components);
+            this.button4 = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // serialPort1
@@ -181,11 +183,32 @@
             this.serialPort2.PortName = "COM2";
             this.serialPort2.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(this.serialPort2_DataReceived);
             // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(489, 104);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(75, 23);
+            this.button4.TabIndex = 13;
+            this.button4.Text = "Calc SUM";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(570, 109);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(35, 12);
+            this.label1.TabIndex = 14;
+            this.label1.Text = "label1";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(729, 357);
+            this.ClientSize = new System.Drawing.Size(729, 356);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.button4);
             this.Controls.Add(this.ModeComboBox);
             this.Controls.Add(this.logCheckBox1);
             this.Controls.Add(this.scanStopButton);
@@ -225,6 +248,8 @@
         private System.Windows.Forms.CheckBox logCheckBox1;
         private System.Windows.Forms.ComboBox ModeComboBox;
         private System.IO.Ports.SerialPort serialPort2;
+        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Label label1;
     }
 }
 
